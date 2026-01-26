@@ -24,6 +24,7 @@ import numpy as np
 import tensorflow as tf
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from google.cloud import storage
 from PIL import Image
 
@@ -271,10 +272,10 @@ def _decode_image(file_bytes: bytes) -> np.ndarray:
 def _run_inference(image_array: np.ndarray) -> dict:
     """
     Run inference with strict waterfall logic.
-    
+
     Inputs:
         image_array: (256, 256, 3), dtype uint8
-    
+
     Returns:
         {
             "crop": {"label": str, "confidence": float},
@@ -293,9 +294,9 @@ def _run_inference(image_array: np.ndarray) -> dict:
     predictions = _model(batch, training=False)
 
     # Extract outputs
-    crop_probs = predictions["crop"].numpy()[0]  # shape (15,)
-    disease_probs = predictions["disease"].numpy()[0]  # shape (21,)
-    is_diseased_prob = float(predictions["is_diseased"].numpy()[0, 0])  # scalar in [0, 1]
+    crop_probs = predictions["crop"].numpy()[0]
+    disease_probs = predictions["disease"].numpy()[0]
+    is_diseased_prob = float(predictions["is_diseased"].numpy()[0, 0])
 
     # Get argmax indices
     crop_idx = int(np.argmax(crop_probs))
@@ -325,9 +326,7 @@ def _run_inference(image_array: np.ndarray) -> dict:
         }
 
     # STEP 3: DISEASE IDENTIFICATION
-    # is_diseased >= 0.5: Report as diseased
     if disease_label_raw == "healthy":
-        # Conflict resolution: binary head is authority
         disease_label = "Unspecified Disease"
     else:
         disease_label = _sanitize_label(disease_label_raw)
@@ -343,10 +342,10 @@ def _run_inference(image_array: np.ndarray) -> dict:
 async def predict(file: UploadFile = File(...)):
     """
     Prediction endpoint.
-    
+
     POST /predict with multipart/form-data
     Form field: file (JPEG or PNG image)
-    
+
     Returns:
     {
         "crop": {"label": str, "confidence": float},
@@ -370,17 +369,12 @@ async def predict(file: UploadFile = File(...)):
             )
 
     try:
-        # Read file bytes
         file_bytes = await file.read()
         if not file_bytes:
             raise ValueError("Empty file")
 
-        # Decode image
         image_array = _decode_image(file_bytes)
-
-        # Run inference
         result = _run_inference(image_array)
-
         return result
 
     except ValueError as e:
@@ -396,10 +390,9 @@ async def predict(file: UploadFile = File(...)):
         )
 
 
-@app.get("/", redirect_to="/docs")
+@app.get("/", include_in_schema=False)
 async def root():
-    """Redirect to Swagger UI documentation."""
-    pass
+    return RedirectResponse(url="/docs")
 
 
 if __name__ == "__main__":
