@@ -1,0 +1,70 @@
+# Cloud Run Deployment Configuration
+# Update PROJECT_ID before deploying
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: plant-disease-backend
+  namespace: default
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '10'
+        autoscaling.knative.dev/minScale: '1'
+    spec:
+      serviceAccountName: plant-disease-backend-sa
+      containers:
+      - image: gcr.io/PROJECT_ID/plant-disease-backend:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            memory: 4Gi
+            cpu: 2
+          requests:
+            memory: 2Gi
+            cpu: 1
+        env:
+        - name: PORT
+          value: '8080'
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+  traffic:
+  - percent: 100
+    latestRevision: true
+---
+# Service Account for model access
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMServiceAccount
+metadata:
+  name: plant-disease-backend-sa
+spec:
+  displayName: Plant Disease Backend Service Account
+---
+# IAM Binding: Service Account has GCS read access
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicy
+metadata:
+  name: plant-disease-backend-gcs-policy
+spec:
+  resourceRef:
+    apiVersion: storage.cnrm.cloud.google.com/v1beta1
+    kind: StorageBucket
+    name: plant-model-global
+  bindings:
+  - role: roles/storage.objectViewer
+    members:
+    - serviceAccount:plant-disease-backend-sa@PROJECT_ID.iam.gserviceaccount.com
