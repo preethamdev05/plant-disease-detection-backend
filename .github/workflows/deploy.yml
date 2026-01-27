@@ -46,7 +46,9 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: gcr.io/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}:${{ github.sha }}
-          # Increased memory to 2GiB for TensorFlow overhead
-          # Increased timeout to 300s (5m) for model download
-          # Set concurrency to 80 (default)
-          flags: '--allow-unauthenticated --memory=2Gi --cpu=1 --timeout=300'
+          # Optimized flags for heavy startup:
+          # - memory=2Gi: Required for TF model loading
+          # - cpu=2: Faster startup processing (TF load is CPU bound)
+          # - timeout=300: 5min max for startup
+          # - concurrency=80: Standard default
+          flags: '--allow-unauthenticated --memory=2Gi --cpu=2 --timeout=300'
