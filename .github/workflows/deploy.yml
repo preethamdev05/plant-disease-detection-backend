@@ -46,4 +46,7 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: gcr.io/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}:${{ github.sha }}
-          flags: '--allow-unauthenticated --memory=1Gi --cpu=1'
+          # Increased memory to 2GiB for TensorFlow overhead
+          # Increased timeout to 300s (5m) for model download
+          # Set concurrency to 80 (default)
+          flags: '--allow-unauthenticated --memory=2Gi --cpu=1 --timeout=300'
