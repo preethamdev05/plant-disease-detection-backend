@@ -1,3 +1,4 @@
+"""
 Plant Disease Detection FastAPI Backend
 Production-grade, Cloud Run ready, deterministic inference.
 
@@ -9,7 +10,7 @@ Contract:
 - Load TensorFlow model from GCS with compile=False
 - Three output heads: crop (softmax), disease (softmax), is_diseased (sigmoid)
 - Inference logic: Strict waterfall (NON_CROP -> HEALTH_GATE -> DISEASE)
-- CORS: Restricted origins (GitHub Pages & Cloud Run Web)
+- CORS: Only https://preethamdev05.github.io
 - Health threshold: 0.5 (is_diseased sigmoid output)
 """
 
@@ -37,11 +38,8 @@ HEALTH_THRESHOLD = 0.5
 TARGET_IMAGE_SIZE = (256, 256)
 ALLOWED_EXTENSIONS = {".jpeg", ".jpg", ".png"}
 
-# CORS configuration: Exact origins, no wildcards
-FRONTEND_ORIGINS = [
-    "https://preethamdev05.github.io",
-    "https://plantdoc-pro-812118174928.us-west1.run.app"
-]
+# CORS configuration: Exact origin, no wildcards
+FRONTEND_ORIGIN = "https://preethamdev05.github.io"
 
 # Configure logging
 logging.basicConfig(
@@ -183,7 +181,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=FRONTEND_ORIGINS,
+    allow_origins=[FRONTEND_ORIGIN],
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
