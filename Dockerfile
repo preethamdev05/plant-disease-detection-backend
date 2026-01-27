@@ -22,13 +22,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY main.py .
 COPY inference_metadata.json .
 
-# Health check (optional but recommended)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD python -c "import requests; requests.get('http://localhost:8080/health')"
+# REMOVED: Healthcheck instruction in Dockerfile
+# Cloud Run has its own built-in health checking mechanism (Startup/Liveness probes).
+# Defining HEALTHCHECK here can sometimes conflict or be redundant if not perfectly aligned.
+# We rely on Cloud Run's TCP probe to port 8080.
 
-# Expose port
+# Expose port (Documentation only, Cloud Run overrides this)
 EXPOSE 8080
 
 # Run the application
 # Cloud Run sets PORT environment variable; uvicorn reads it in main.py
-CMD ["python", "-u", "main.py"]
+# Added --host 0.0.0.0 explicitly to ensure we bind to all interfaces
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1"]
