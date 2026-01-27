@@ -9,7 +9,8 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: us-west1
-  SERVICE_NAME: plantdoc-pro
+  # CRITICAL: Service name must match the one in logs/console
+  SERVICE_NAME: multitask-inference-backend
   REPO_NAME: plant-disease-detection-backend
 
 jobs:
@@ -48,7 +49,7 @@ jobs:
           image: gcr.io/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}:${{ github.sha }}
           # Optimized flags for heavy startup:
           # - memory=2Gi: Required for TF model loading
-          # - cpu=2: Faster startup processing (TF load is CPU bound)
+          # - cpu=2: Faster startup processing
           # - timeout=300: 5min max for startup
           # - concurrency=80: Standard default
           flags: '--allow-unauthenticated --memory=2Gi --cpu=2 --timeout=300'
