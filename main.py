@@ -10,7 +10,7 @@ Contract:
 - Load TensorFlow model from GCS with compile=False
 - Three output heads: crop (softmax), disease (softmax), is_diseased (sigmoid)
 - Inference logic: Strict waterfall (NON_CROP -> HEALTH_GATE -> DISEASE)
-- CORS: Allowed origins [https://preethamdev05.github.io, https://plantdoc-pro-812118174928.us-west1.run.app]
+- CORS: Allowed origins read from env var (comma-separated)
 - Health threshold: 0.5 (is_diseased sigmoid output)
 """
 
@@ -38,11 +38,12 @@ HEALTH_THRESHOLD = 0.5
 TARGET_IMAGE_SIZE = (256, 256)
 ALLOWED_EXTENSIONS = {".jpeg", ".jpg", ".png"}
 
-# CORS configuration: Exact origins, no wildcards
-ALLOWED_ORIGINS = [
-    "https://preethamdev05.github.io",
-    "https://plantdoc-pro-812118174928.us-west1.run.app"
-]
+# CORS configuration: Read from environment
+ALLOWED_ORIGINS_STR = os.getenv(
+    'ALLOWED_ORIGINS',
+    'https://preethamdev05.github.io,https://plantdoc-pro-812118174928.us-west1.run.app'
+)
+ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_STR.split(',')]
 
 # Configure logging
 logging.basicConfig(
@@ -50,6 +51,8 @@ logging.basicConfig(
     format="%(asctime)s | %(name)s | %(levelname)s | %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+logger.info(f"CORS Allowed Origins: {ALLOWED_ORIGINS}")
 
 # =============================================================================
 # GLOBAL STATE: Model, Metadata, Readiness
