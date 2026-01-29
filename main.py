@@ -299,7 +299,7 @@ def _run_inference(image_array: np.ndarray) -> dict:
     # Extract outputs
     crop_probs = predictions["crop"].numpy()[0]
     disease_probs = predictions["disease"].numpy()[0]
-    is_diseased_prob = float(predictions["is_diseased"].numpy()[0, 0])
+    isdiseased_raw = float(predictions["is_diseased"].numpy()[0, 0])
 
     # Get argmax indices
     crop_idx = int(np.argmax(crop_probs))
@@ -321,10 +321,18 @@ def _run_inference(image_array: np.ndarray) -> dict:
         }
 
     # STEP 2: HEALTH GATE (sole authority)
-    if is_diseased_prob < HEALTH_THRESHOLD:
+    is_diseased = isdiseased_raw >= HEALTH_THRESHOLD
+    if not is_diseased:
+        health_status = "healthy"
+        health_prob = 1.0 - isdiseased_raw
+    else:
+        health_status = "diseased"
+        health_prob = isdiseased_raw
+
+    if not is_diseased:
         return {
             "crop": {"label": _sanitize_label(crop_label), "confidence": crop_confidence},
-            "health": {"status": "healthy", "probability": is_diseased_prob},
+            "health": {"status": health_status, "probability": health_prob},
             "disease": None,
         }
 
@@ -336,7 +344,7 @@ def _run_inference(image_array: np.ndarray) -> dict:
 
     return {
         "crop": {"label": _sanitize_label(crop_label), "confidence": crop_confidence},
-        "health": {"status": "diseased", "probability": is_diseased_prob},
+        "health": {"status": health_status, "probability": health_prob},
         "disease": {"label": disease_label, "confidence": disease_confidence},
     }
 
