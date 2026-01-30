@@ -41,7 +41,7 @@ ALLOWED_EXTENSIONS = {".jpeg", ".jpg", ".png"}
 # CORS configuration: Read from environment
 ALLOWED_ORIGINS_STR = os.getenv(
     'ALLOWED_ORIGINS',
-    'https://preethamdev05.github.io,https://plantdoc-pro-812118174928.us-west1.run.app,https://plant-doc-pro-812118174928.asia-south1.run.app/'
+    'https://preethamdev05.github.io,https://plantdoc-pro-812118174928.us-west1.run.app,https://plant-doc-pro-812118174928.asia-south1.run.app'
 )
 ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_STR.split(',')]
 
